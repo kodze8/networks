@@ -1,7 +1,7 @@
-import re
 import socket
 import threading
 import statics
+
 
 class server:
 
@@ -19,36 +19,32 @@ class server:
             client_socket, client_IP = self.server.accept()
             threading.Thread(target=self.handleClient, args=(client_socket,)).start()
 
+    def loginClient(self, client_socket):
+        client_socket.send("Welcome to Chat Client. Enter your login:".encode('utf-8'))
+        username = client_socket.recv(1024).decode('utf-8')
+        validated = self.validate(username)
+        if validated:
+            self.clientNames.add(username)
+            client_socket.send(f"HELLO {username}\n".encode('utf-8'))
+        return validated
+
+    def handleClient(self, client_socket):
+        successLogIn = self.loginClient(client_socket)
+        if not successLogIn:
+            client_socket.close()
+            return
+        self.clients.append(client_socket)
+        self.handleTexting(client_socket)
+
     def validate(self, firstMsg):
-        pattern = r"^HELLO-FROM [A-Za-z]+\s*$"
-        format_validated = bool(re.match(pattern, firstMsg))
-
-        if not format_validated:
-            return False, "Invalid Format"
-
-        name = firstMsg.split(" ")[1]
-
-        if self.clientNames.__contains__(name):
-            return False, "Name is taken"
-        else:
-            self.clientNames.add(name)
-            return True, f"Hello {name}"
+        if self.clientNames.__contains__(firstMsg):
+            return False
+        return True
 
     def broadcast(self, msg, sender):
         for client in self.clients:
             if client is not sender:
                 client.send(msg)
-
-    def handleClient(self, client_socket):
-        firstMsg = client_socket.recv(1024).decode('utf-8')
-        validated = self.validate(firstMsg)
-
-        if not validated[0]:
-            client_socket.close()
-            return
-        client_socket.send(validated[1].encode('utf-8'))
-        self.clients.append(client_socket)
-        self.handleTexting(client_socket)
 
     def handleTexting(self, client_socket):
         while True:

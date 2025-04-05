@@ -9,7 +9,6 @@ YELLOW = "\033[33m"
 BLUE = "\033[34m"
 RESET = "\033[0m"
 
-WELCOME_MESSAGE = "Welcome to chat! "
 
 
 class client:
@@ -18,7 +17,6 @@ class client:
         self.running = True
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.connect((statics.SERVER_IP, statics.PORT))
-        print(WELCOME_MESSAGE)
 
         threading.Thread(target=self.receiveMsg).start()
         threading.Thread(target=self.sendMsg).start()
@@ -29,7 +27,22 @@ class client:
             if not message:
                 self.close()
             else:
-                print(f"{YELLOW}{message.decode('utf-8')}")
+                response = message.decode('utf-8')
+                if response.startswith("HELLO "):
+                    username = response.split(" ", 1)[1]
+                    print(f"Successfully logged in as {username}!")
+
+                elif response == "IN-USE":
+                    print(f"Cannot log in as {username}. That username is already in use.")
+
+                elif response == "BUSY":
+                    print("Cannot log in. The server is full!")
+
+                elif response == "BAD-RQST-BODY":
+                    print(f"Cannot log in as {username}. That username contains disallowed characters.")
+                # Others need to be implemented.
+                else:
+                    print(f"{YELLOW}{message.decode('utf-8')}")
 
     def sendMsg(self):
         while self.running:
