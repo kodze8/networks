@@ -27,7 +27,7 @@ class client:
             if not message:
                 self.close()
             else:
-                response = message.decode('utf-8')
+                response = message.decode('utf-8').strip()
                 if response.startswith("HELLO "):
                     username = response.split(" ", 1)[1]
                     print(f"Successfully logged in as {username}!")
@@ -38,11 +38,31 @@ class client:
                 elif response == "BUSY":
                     print("Cannot log in. The server is full!")
 
-                elif response == "BAD-RQST-BODY":
-                    print(f"Cannot log in as {username}. That username contains disallowed characters.")
-                # Others need to be implemented.
+                elif response.startswith("LIST-OK"):
+                    names = response.strip("LIST-OK ").split(", ")
+                    name_builder = "\n".join(names)
+                    print(f"There are {len(names)} online users:\n{name_builder}")
+
+                elif response.startswith("SEND-OK"):
+                    print("The message was sent successfully")
+
+                elif response.startswith("BAD-DEST-USER"):
+                    print("The destination user does not exist")
+
+                elif response.startswith("DELIVERY"):
+                    lst = response.split(" ")
+                    sender = lst[1]
+                    msg = " ".join(lst[2:])
+                    print(f"From {sender}: {msg}")
+
+                elif response.startswith("BAD-RQST-HDR"):
+                    print("Error: Unknown issue in previous message header.")
+
+                elif response.startswith("BAD-RQST-BODY"):
+                    print("Error: Unknown issue in previous message body.")
+
                 else:
-                    print(f"{YELLOW}{message.decode('utf-8')}")
+                    print(f"{RED}{message.decode('utf-8')}")
 
     def sendMsg(self):
         while self.running:
@@ -50,7 +70,15 @@ class client:
                 message = input()
             else:
                 break
-            self.client_socket.send(message.encode('utf-8'))
+
+            if message.startswith("@"):
+                name = message.strip("@").split(" ")[0]
+                msg = " ".join(message.split(" ")[1:])
+                self.client_socket.send(f"SEND {name} {msg}\n".encode('utf-8'))
+            elif message == "!who":
+                self.client_socket.send("LIST\n".encode('utf-8'))
+            else:
+                self.client_socket.send(message.encode('utf-8'))
 
     def close(self):
         if not self.running:
