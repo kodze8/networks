@@ -1,15 +1,20 @@
+import os
 import socket
 import threading
+
 import statics
-import os
 
 RED = "\033[31m"
 GREEN = "\033[32m"
 YELLOW = "\033[33m"
 BLUE = "\033[34m"
 RESET = "\033[0m"
+WHITE = "\033[97m"
 
 
+# server response is GREEN
+# text messages are yellow
+# input are blue
 
 class client:
 
@@ -28,41 +33,49 @@ class client:
                 self.close()
             else:
                 response = message.decode('utf-8').strip()
+
                 if response.startswith("HELLO "):
                     username = response.split(" ", 1)[1]
-                    print(f"Successfully logged in as {username}!")
+                    print(f"{WHITE}Successfully logged in as {username}!")
 
-                elif response == "IN-USE":
-                    print(f"Cannot log in as {username}. That username is already in use.")
+                elif response.startswith("IN-USE"):
+                    username = response.split(" ", 1)[1]
+                    print(f"{RED}Cannot log in as {username}. That username is already in use.")
+                    print(f"{BLUE}Enter different username:")
 
-                elif response == "BUSY":
-                    print("Cannot log in. The server is full!")
+                elif response.startswith("INVALID-CHARACTER"):
+                    username = response.split(" ", 1)[1]
+                    print(f"{RED}Cannot log in as {username}. That username contains invalid characters.")
+                    print(f"{BLUE}Enter different username:")
+
+                elif response.startswith("BUSY"):
+                    print(f"{RED}Cannot log in. The server is full!")
 
                 elif response.startswith("LIST-OK"):
                     names = response.strip("LIST-OK ").split(", ")
                     name_builder = "\n".join(names)
-                    print(f"There are {len(names)} online users:\n{name_builder}")
+                    print(f"{BLUE}There are {len(names)} online users:\n{name_builder}")
 
                 elif response.startswith("SEND-OK"):
-                    print("The message was sent successfully")
+                    print(f"{WHITE}The message was sent successfully")
 
                 elif response.startswith("BAD-DEST-USER"):
-                    print("The destination user does not exist")
+                    print(f"{RED}The destination user does not exist")
 
                 elif response.startswith("DELIVERY"):
                     lst = response.split(" ")
                     sender = lst[1]
                     msg = " ".join(lst[2:])
-                    print(f"From {sender}: {msg}")
+                    print(f"{BLUE}From {sender}: {msg}")
 
                 elif response.startswith("BAD-RQST-HDR"):
-                    print("Error: Unknown issue in previous message header.")
+                    print(f"{RED}Error: Unknown issue in previous message header.")
 
                 elif response.startswith("BAD-RQST-BODY"):
-                    print("Error: Unknown issue in previous message body.")
+                    print(f"{RED}Error: Unknown issue in previous message body.")
 
                 else:
-                    print(f"{RED}{message.decode('utf-8')}")
+                    print(f"{BLUE}{message.decode('utf-8')}")
 
     def sendMsg(self):
         while self.running:
