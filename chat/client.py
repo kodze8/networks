@@ -12,10 +12,6 @@ RESET = "\033[0m"
 WHITE = "\033[97m"
 
 
-# server response is GREEN
-# text messages are yellow
-# input are blue
-
 class client:
 
     def __init__(self):
@@ -101,4 +97,5 @@ class client:
         os._exit(1)
 
 
-c = client()
+if __name__ == '__main__':
+    c = client()
