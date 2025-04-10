@@ -1,16 +1,15 @@
 import socket
 import threading
-import statics
-
+from argparse import Namespace, ArgumentParser
 
 class server:
 
-    def __init__(self):
+    def __init__(self, host, port):
         self.maxUser = 5
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.bind((statics.SERVER_IP, statics.PORT))
+        self.server.bind((host, port))
         self.server.listen(5)
-        print("Server is Listening...")
+        print(f"Server is Listening on {host}:{port}...")
         self.clients = {}
         self.clientNames = set()
         self.running = True
@@ -75,6 +74,8 @@ class server:
                 msg = client_socket.recv(1024).decode('utf-8').strip()
                 if msg == "LIST":
                     names = ", ".join(self.clientNames)
+                    print(names)
+                    print(self.clients)
                     client_socket.send(f"LIST-OK {names}\n".encode('utf-8'))
                 elif msg.startswith("SEND"):
                     address = msg.split(" ")[1]
@@ -98,6 +99,10 @@ class server:
             except:
                 self.running = False
 
+def parse_arguments() -> Namespace:
+    parser = ArgumentParser(description="A1 Chat Server")
+    parser.add_argument("-a", "--address", type=str, default="0.0.0.0", help="Set server address")
+    parser.add_argument("-p", "--port", type=int, default=5378, help="Set server port")
+    return parser.parse_args()
 
-if __name__ == '__main__':
-    server = server()
+
